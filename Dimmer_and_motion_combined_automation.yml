@@ -14,8 +14,8 @@ blueprint:
                     filter:
                         device_class: motion
                         domain: binary_sensor
-        dimmer:
-            name: Remote dimmer
+        remote_device:
+            name: Remote dimmer switch
             selector:
                 device:
         target_light:
