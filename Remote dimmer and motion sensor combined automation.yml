@@ -1,210 +1,227 @@
 blueprint:
-    name: Remote dimmer and motion sensor combined automation
+    name: Dimmer remote and motion sensor combined automation
+    description: Control a light with a motion sensor and a remote dimmer
     domain: automation
-configuration:
-    motion_sensor:
-        name: Motion sensor
-        description: Select motion sensor
-        selector:
-            entity:
-                domain: zha
-    dimmer:
-        name: Remote dimmer
-        description: Select dimmer
-        selector:
-            entity:
-                domain: zha
-    target_light:
-        name: Target light
-        description: Select target light to control
-        selector:
-            entity:
-                domain: light
-    delay_time:
-        name: Delay time
-        description: Set the delay time before turning off the light after motion activation (seconds)
-        default: 300
-        selector:
-            number:
-    presence_clear_time:
-        name: Presence clear time
-        description: Set the max time for empty presence to turn off manually switched light (seconds)
-        default: 3600
-        selector:
-            number:
+    source_url: https://github.com/dimamedia/ha_blueprints/blob/main/Remote%20dimmer%20and%20motion%20sensor%20combined%20automation.yml
+    author: Dima Tsvetkov
     
+    input:
+        motion_sensor:
+            name: Motion sensor
+            description: Select motion sensor
+            selector:
+                entity:
+                    filter:
+                        device_class: motion
+                        domain: binary_sensor
+        dimmer:
+            name: Remote dimmer
+            selector:
+                entity:
+        target_light:
+            name: Target light
+            selector:
+                entity:
+                    domain: light
+        no_motion_time:
+            name: No motion time to wait
+            description: Set the wait time before turning off the light after no motion detected (minutes)
+            default: 5
+            selector:
+                number:
+                    unit_of_measurement: minutes
+        no_presence_time:
+            name: No presence time
+            description: Set the max time for empty presence to turn off manually switched light (minutes)
+            default: 60
+            selector:
+                number:
+                    unit_of_measurement: minutes
     
-trigger:
-  - device_id: 0dfffdafb3b795da83a3eec60c80c38e
-    domain: zha
-    platform: device
-    type: remote_button_short_press
-    subtype: turn_on
-    id: Turn-on
-  - device_id: 0dfffdafb3b795da83a3eec60c80c38e
-    domain: zha
-    platform: device
-    type: remote_button_short_press
-    subtype: turn_off
-    id: Turn-off
-  - device_id: 0dfffdafb3b795da83a3eec60c80c38e
-    domain: zha
-    platform: device
-    type: remote_button_long_press
-    subtype: dim_up
-    id: Dim-up
-  - device_id: 0dfffdafb3b795da83a3eec60c80c38e
-    domain: zha
-    platform: device
-    type: remote_button_long_release
-    subtype: dim_up
-    id: Dim-up released
-  - device_id: 0dfffdafb3b795da83a3eec60c80c38e
-    domain: zha
-    platform: device
-    type: remote_button_long_press
-    subtype: dim_down
-    id: Dim-down
-  - device_id: 0dfffdafb3b795da83a3eec60c80c38e
-    domain: zha
-    platform: device
-    type: remote_button_long_release
-    subtype: dim_down
-    id: Dim-down released
-  - type: motion
-    platform: device
-    device_id: cd826c1c7c44984f47e3a4938a585c02
-    entity_id: 057be454399bf24ff5c8c9b8de0fa909
-    domain: binary_sensor
-    id: Motion start
-  - type: no_motion
-    platform: device
-    device_id: cd826c1c7c44984f47e3a4938a585c02
-    entity_id: 057be454399bf24ff5c8c9b8de0fa909
-    domain: binary_sensor
-    id: Motion end
-    for:
-      hours: 0
-      minutes: 2
-      seconds: 0
-condition: []
-action:
-  - choose:
-      - conditions:
-          - condition: trigger
-            id:
-              - Turn-on
-        sequence:
-          - service: light.turn_on
-            metadata: {}
-            data:
-              brightness_pct: 100
-              kelvin: 3015
-              transition: 1
-            target:
-              device_id: 1c6c7c50826e0b28acd901f879bf406d
-          - service: input_boolean.turn_on
-            metadata: {}
-            data: {}
-            target:
-              entity_id: input_boolean.ylaaula_valo_lukko
-      - conditions:
-          - condition: trigger
-            id:
-              - Turn-off
-        sequence:
-          - service: light.turn_off
-            target:
-              device_id:
-                - 1c6c7c50826e0b28acd901f879bf406d
-            data:
-              transition: 1
-          - service: input_boolean.turn_off
-            target:
-              entity_id:
-                - input_boolean.ylaaula_valo_lukko
-            data: {}
-      - conditions:
-          - condition: trigger
-            id:
-              - Dim-up
-        sequence:
-          - repeat:
-              sequence:
-                - service: light.turn_on
-                  metadata: {}
-                  data:
-                    transition: 1
-                    brightness_step_pct: 5
-                  target:
-                    device_id: 1c6c7c50826e0b28acd901f879bf406d
-              until:
-                - condition: trigger
-                  id:
-                    - Dim-up released
-      - conditions:
-          - condition: trigger
-            id:
-              - Dim-down
-        sequence:
-          - repeat:
-              sequence:
-                - service: light.turn_on
-                  metadata: {}
-                  data:
-                    transition: 1
-                    brightness_step_pct: -5
-                  target:
-                    device_id: 1c6c7c50826e0b28acd901f879bf406d
-              until:
-                - condition: trigger
-                  id:
-                    - Dim-down released
-      - conditions:
-          - condition: trigger
-            id:
-              - Motion start
-          - condition: state
-            entity_id: input_boolean.ylaaula_valo_lukko
-            state: "off"
-        sequence:
-          - choose:
-              - conditions:
-                  - condition: state
-                    entity_id: binary_sensor.yoaika
-                    state: "on"
-                sequence:
+    mode: restart
+    
+    trigger:
+      - device_id: 0dfffdafb3b795da83a3eec60c80c38e
+        domain: zha
+        platform: device
+        type: remote_button_short_press
+        subtype: turn_on
+        id: Turn-on
+      - device_id: 0dfffdafb3b795da83a3eec60c80c38e
+        domain: zha
+        platform: device
+        type: remote_button_short_press
+        subtype: turn_off
+        id: Turn-off
+      - device_id: 0dfffdafb3b795da83a3eec60c80c38e
+        domain: zha
+        platform: device
+        type: remote_button_long_press
+        subtype: dim_up
+        id: Dim-up
+      - device_id: 0dfffdafb3b795da83a3eec60c80c38e
+        domain: zha
+        platform: device
+        type: remote_button_long_release
+        subtype: dim_up
+        id: Dim-up released
+      - device_id: 0dfffdafb3b795da83a3eec60c80c38e
+        domain: zha
+        platform: device
+        type: remote_button_long_press
+        subtype: dim_down
+        id: Dim-down
+      - device_id: 0dfffdafb3b795da83a3eec60c80c38e
+        domain: zha
+        platform: device
+        type: remote_button_long_release
+        subtype: dim_down
+        id: Dim-down released
+      - type: motion
+        platform: device
+        device_id: cd826c1c7c44984f47e3a4938a585c02
+        entity_id: 057be454399bf24ff5c8c9b8de0fa909
+        domain: binary_sensor
+        id: Motion start
+      - type: no_motion
+        platform: device
+        device_id: cd826c1c7c44984f47e3a4938a585c02
+        entity_id: 057be454399bf24ff5c8c9b8de0fa909
+        domain: binary_sensor
+        id: Motion end
+        for:
+          hours: 0
+          minutes: 2
+          seconds: 0
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id:
+                  - Turn-on
+            sequence:
+              - service: light.turn_on
+                metadata: {}
+                data:
+                  brightness_pct: 100
+                  kelvin: 3015
+                  transition: 1
+                target:
+                  device_id: 1c6c7c50826e0b28acd901f879bf406d
+              - service: input_boolean.turn_on
+                metadata: {}
+                data: {}
+                target:
+                  entity_id: input_boolean.ylaaula_valo_lukko
+          - conditions:
+              - condition: trigger
+                id:
+                  - Turn-off
+            sequence:
+              - service: light.turn_off
+                target:
+                  device_id:
+                    - 1c6c7c50826e0b28acd901f879bf406d
+                data:
+                  transition: 1
+              - service: input_boolean.turn_off
+                target:
+                  entity_id:
+                    - input_boolean.ylaaula_valo_lukko
+                data: {}
+          - conditions:
+              - condition: trigger
+                id:
+                  - Dim-up
+            sequence:
+              - repeat:
+                  sequence:
+                    - service: light.turn_on
+                      metadata: {}
+                      data:
+                        transition: 1
+                        brightness_step_pct: 5
+                      target:
+                        device_id: 1c6c7c50826e0b28acd901f879bf406d
+                  until:
+                    - condition: trigger
+                      id:
+                        - Dim-up released
+          - conditions:
+              - condition: trigger
+                id:
+                  - Dim-down
+            sequence:
+              - repeat:
+                  sequence:
+                    - service: light.turn_on
+                      metadata: {}
+                      data:
+                        transition: 1
+                        brightness_step_pct: -5
+                      target:
+                        device_id: 1c6c7c50826e0b28acd901f879bf406d
+                  until:
+                    - condition: trigger
+                      id:
+                        - Dim-down released
+          - conditions:
+              - condition: trigger
+                id:
+                  - Motion start
+              - condition: state
+                entity_id: input_boolean.ylaaula_valo_lukko
+                state: "off"
+            sequence:
+              - choose:
+                  - conditions:
+                      - condition: state
+                        entity_id: binary_sensor.yoaika
+                        state: "on"
+                    sequence:
+                      - service: light.turn_on
+                        metadata: {}
+                        data:
+                          transition: 1
+                          brightness_pct: 20
+                          kelvin: 2000
+                        target:
+                          device_id: 1c6c7c50826e0b28acd901f879bf406d
+                default:
                   - service: light.turn_on
                     metadata: {}
                     data:
                       transition: 1
-                      brightness_pct: 20
-                      kelvin: 2000
+                      kelvin: 3007
+                      brightness_pct: 100
                     target:
                       device_id: 1c6c7c50826e0b28acd901f879bf406d
-            default:
-              - service: light.turn_on
-                metadata: {}
-                data:
-                  transition: 1
-                  kelvin: 3007
-                  brightness_pct: 100
-                target:
-                  device_id: 1c6c7c50826e0b28acd901f879bf406d
-      - conditions:
-          - condition: trigger
-            id:
-              - Motion end
-        sequence:
-          - choose:
-              - conditions:
-                  - condition: state
-                    entity_id: input_boolean.ylaaula_valo_lukko
-                    state: "on"
-                sequence:
+          - conditions:
+              - condition: trigger
+                id:
+                  - Motion end
+            sequence:
+              - choose:
+                  - conditions:
+                      - condition: state
+                        entity_id: input_boolean.ylaaula_valo_lukko
+                        state: "on"
+                    sequence:
+                      - delay:
+                          hours: 1
+                          minutes: 0
+                          seconds: 0
+                          milliseconds: 0
+                      - service: light.turn_off
+                        metadata: {}
+                        data:
+                          transition: 1
+                        target:
+                          device_id: 1c6c7c50826e0b28acd901f879bf406d
+                default:
                   - delay:
-                      hours: 1
-                      minutes: 0
+                      hours: 0
+                      minutes: 2
                       seconds: 0
                       milliseconds: 0
                   - service: light.turn_off
@@ -213,16 +230,3 @@ action:
                       transition: 1
                     target:
                       device_id: 1c6c7c50826e0b28acd901f879bf406d
-            default:
-              - delay:
-                  hours: 0
-                  minutes: 2
-                  seconds: 0
-                  milliseconds: 0
-              - service: light.turn_off
-                metadata: {}
-                data:
-                  transition: 1
-                target:
-                  device_id: 1c6c7c50826e0b28acd901f879bf406d
-mode: restart
