@@ -1,5 +1,5 @@
 blueprint:
-    name: Dimmer remote and motion sensor combined automation
+    name: Remote dimmer and motion sensor combined automation
     domain: automation
 configuration:
     motion_sensor:
