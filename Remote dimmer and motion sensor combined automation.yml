@@ -29,6 +29,8 @@ blueprint:
             default: 5
             selector:
                 number:
+                    min: 0
+                    max: 60
                     unit_of_measurement: minutes
         no_presence_time:
             name: No presence time
@@ -36,6 +38,8 @@ blueprint:
             default: 60
             selector:
                 number:
+                    min: 0
+                    max: 720
                     unit_of_measurement: minutes
     
 mode: restart
