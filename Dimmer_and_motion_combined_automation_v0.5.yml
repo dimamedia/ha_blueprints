@@ -66,37 +66,37 @@ blueprint:
 mode: restart
     
 trigger:
-  - device_id: !input remote_device
+  - device_id: {{ remote_device }}
     domain: zha
     platform: device
     type: remote_button_short_press
     subtype: turn_on
     id: Turn-on
-  - device_id: !input remote_device
+  - device_id: {{ remote_device }}
     domain: zha
     platform: device
     type: remote_button_short_press
     subtype: turn_off
     id: Turn-off
-  - device_id: !input remote_device
+  - device_id: {{ remote_device }}
     domain: zha
     platform: device
     type: remote_button_long_press
     subtype: dim_up
     id: Dim-up
-  - device_id: !input remote_device
+  - device_id: {{ remote_device }}
     domain: zha
     platform: device
     type: remote_button_long_release
     subtype: dim_up
     id: Dim-up released
-  - device_id: !input remote_device
+  - device_id: {{ remote_device }}
     domain: zha
     platform: device
     type: remote_button_long_press
     subtype: dim_down
     id: Dim-down
-  - device_id: !input remote_device
+  - device_id: {{ remote_device }}
     domain: zha
     platform: device
     type: remote_button_long_release
@@ -104,12 +104,12 @@ trigger:
     id: Dim-down released
   - type: motion
     platform: device
-    entity_id: !input motion_sensor
+    entity_id: {{ motion_sensor }}
     domain: binary_sensor
     id: Motion start
   - type: no_motion
     platform: device
-    entity_id: !input motion_sensor
+    entity_id: {{ motion_sensor }}
     domain: binary_sensor
     id: Motion end
     for:
