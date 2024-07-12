@@ -43,7 +43,7 @@ blueprint:
                 number:
                     min: 0
                     max: 100
-                    unit_of_measurement: %
+                    unit_of_measurement: "%"
         no_motion_time:
             name: No motion time to wait
             description: Set the wait time before turning off the light after no motion is detected (minutes)
