@@ -17,7 +17,7 @@ blueprint:
         dimmer:
             name: Remote dimmer
             selector:
-                entity:
+                device:
         target_light:
             name: Target light
             selector:
