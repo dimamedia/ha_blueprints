@@ -1,8 +1,6 @@
 blueprint:
     name: Dimmer remote and motion sensor combined automation
-    description: |
-        Control a light with a motion sensor and a remote dimmer
-        Work with IKEA dimmer switches
+    description: Control light with a motion sensor and a remote dimmer. To use with IKEA dimmer switches.
     domain: automation
     source_url: https://github.com/dimamedia/ha_blueprints/blob/main/Remote%20dimmer%20and%20motion%20sensor%20combined%20automation.yml
     author: Dima Tsvetkov
