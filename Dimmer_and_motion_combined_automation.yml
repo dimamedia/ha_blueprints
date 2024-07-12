@@ -6,6 +6,10 @@ blueprint:
     author: Dima Tsvetkov
     
     input:
+        remote_device:
+            name: Remote dimmer switch
+            selector:
+                device:
         motion_sensor:
             name: Motion sensor
             description: Select motion sensor
@@ -14,18 +18,34 @@ blueprint:
                     filter:
                         device_class: motion
                         domain: binary_sensor
-        remote_device:
-            name: Remote dimmer switch
-            selector:
-                device:
         target_light:
             name: Target light
             selector:
                 entity:
                     domain: light
+        helper_light_lock:
+            name: Helper - light lock
+            description: Boolean helper to keep light on when turned on manually
+            selector:
+                entity:
+                    domain: input_boolean
+        helper_night_time:
+            name: Helper - night time
+            description: Binary helper for predefined nighttime
+            selector:
+                entity:
+                    domain: binary_sensor
+        night_brightness:
+            name: Night brightness
+            description: Light brightness in night mode
+            selector:
+                number:
+                    min: 0
+                    max: 100
+                    unit_of_measurement: percent
         no_motion_time:
             name: No motion time to wait
-            description: Set the wait time before turning off the light after no motion detected (minutes)
+            description: Set the wait time before turning off the light after no motion is detected (minutes)
             default: 5
             selector:
                 number:
