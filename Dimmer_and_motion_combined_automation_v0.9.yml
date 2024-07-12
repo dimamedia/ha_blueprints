@@ -11,7 +11,7 @@ blueprint:
             description: Select the ZHA remote device.
             selector:
                 entity_filter:
-                platform: zha
+                    platform: zha
         actions:
             name: Actions for Button Presses
             description: Define actions for each button press type. This 
