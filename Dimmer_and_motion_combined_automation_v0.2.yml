@@ -38,11 +38,12 @@ blueprint:
         night_brightness:
             name: Night brightness
             description: Light brightness in night mode
+            default: 20
             selector:
                 number:
                     min: 0
                     max: 100
-                    unit_of_measurement: percent
+                    unit_of_measurement: %
         no_motion_time:
             name: No motion time to wait
             description: Set the wait time before turning off the light after no motion is detected (minutes)
@@ -65,37 +66,37 @@ blueprint:
 mode: restart
     
 trigger:
-  - device_id: 0dfffdafb3b795da83a3eec60c80c38e
+  - device_id: !input remote_device
     domain: zha
     platform: device
     type: remote_button_short_press
     subtype: turn_on
     id: Turn-on
-  - device_id: 0dfffdafb3b795da83a3eec60c80c38e
+  - device_id: !input remote_device
     domain: zha
     platform: device
     type: remote_button_short_press
     subtype: turn_off
     id: Turn-off
-  - device_id: 0dfffdafb3b795da83a3eec60c80c38e
+  - device_id: !input remote_device
     domain: zha
     platform: device
     type: remote_button_long_press
     subtype: dim_up
     id: Dim-up
-  - device_id: 0dfffdafb3b795da83a3eec60c80c38e
+  - device_id: !input remote_device
     domain: zha
     platform: device
     type: remote_button_long_release
     subtype: dim_up
     id: Dim-up released
-  - device_id: 0dfffdafb3b795da83a3eec60c80c38e
+  - device_id: !input remote_device
     domain: zha
     platform: device
     type: remote_button_long_press
     subtype: dim_down
     id: Dim-down
-  - device_id: 0dfffdafb3b795da83a3eec60c80c38e
+  - device_id: !input remote_device
     domain: zha
     platform: device
     type: remote_button_long_release
@@ -103,19 +104,17 @@ trigger:
     id: Dim-down released
   - type: motion
     platform: device
-    device_id: cd826c1c7c44984f47e3a4938a585c02
-    entity_id: 057be454399bf24ff5c8c9b8de0fa909
+    entity_id: !input motion_sensor
     domain: binary_sensor
     id: Motion start
   - type: no_motion
     platform: device
-    device_id: cd826c1c7c44984f47e3a4938a585c02
-    entity_id: 057be454399bf24ff5c8c9b8de0fa909
+    entity_id: !input motion_sensor
     domain: binary_sensor
     id: Motion end
     for:
       hours: 0
-      minutes: 2
+      minutes: !input no_motion_time 
       seconds: 0
 action:
   - choose:
@@ -128,10 +127,10 @@ action:
             metadata: {}
             data:
               brightness_pct: 100
-              kelvin: 3015
+              kelvin: 3000
               transition: 1
             target:
-              device_id: 1c6c7c50826e0b28acd901f879bf406d
+              entity_id: !input target_light
           - service: input_boolean.turn_on
             metadata: {}
             data: {}
@@ -144,8 +143,7 @@ action:
         sequence:
           - service: light.turn_off
             target:
-              device_id:
-                - 1c6c7c50826e0b28acd901f879bf406d
+              entity_id: !input target_light
             data:
               transition: 1
           - service: input_boolean.turn_off
@@ -166,7 +164,7 @@ action:
                     transition: 1
                     brightness_step_pct: 5
                   target:
-                    device_id: 1c6c7c50826e0b28acd901f879bf406d
+                    entity_id: !input target_light
               until:
                 - condition: trigger
                   id:
@@ -184,7 +182,7 @@ action:
                     transition: 1
                     brightness_step_pct: -5
                   target:
-                    device_id: 1c6c7c50826e0b28acd901f879bf406d
+                    entity_id: !input target_light
               until:
                 - condition: trigger
                   id:
@@ -194,32 +192,32 @@ action:
             id:
               - Motion start
           - condition: state
-            entity_id: input_boolean.ylaaula_valo_lukko
+            entity_id: !input helper_light_lock
             state: "off"
         sequence:
           - choose:
               - conditions:
                   - condition: state
-                    entity_id: binary_sensor.yoaika
+                    entity_id: !input helper_night_time
                     state: "on"
                 sequence:
                   - service: light.turn_on
                     metadata: {}
                     data:
                       transition: 1
-                      brightness_pct: 20
+                      brightness_pct: !input night_brightness
                       kelvin: 2000
                     target:
-                      device_id: 1c6c7c50826e0b28acd901f879bf406d
+                      entity_id: !input target_light
             default:
               - service: light.turn_on
                 metadata: {}
                 data:
                   transition: 1
-                  kelvin: 3007
+                  kelvin: 3000
                   brightness_pct: 100
                 target:
-                  device_id: 1c6c7c50826e0b28acd901f879bf406d
+                  entity_id: !input target_light
       - conditions:
           - condition: trigger
             id:
@@ -228,12 +226,12 @@ action:
           - choose:
               - conditions:
                   - condition: state
-                    entity_id: input_boolean.ylaaula_valo_lukko
+                    entity_id: !input helper_light_lock
                     state: "on"
                 sequence:
                   - delay:
-                      hours: 1
-                      minutes: 0
+                      hours: 0
+                      minutes: !input no_presence_time
                       seconds: 0
                       milliseconds: 0
                   - service: light.turn_off
@@ -241,11 +239,11 @@ action:
                     data:
                       transition: 1
                     target:
-                      device_id: 1c6c7c50826e0b28acd901f879bf406d
+                      entity_id: !input target_light
             default:
               - delay:
                   hours: 0
-                  minutes: 2
+                  minutes: !input no_motion_time
                   seconds: 0
                   milliseconds: 0
               - service: light.turn_off
@@ -253,4 +251,4 @@ action:
                 data:
                   transition: 1
                 target:
-                  device_id: 1c6c7c50826e0b28acd901f879bf406d
+                  entity_id: !input target_light
