@@ -6,6 +6,19 @@ blueprint:
     author: Dima Tsvetkov
     
     input:
+        remote_dev:
+            name: Remote Device
+            description: Select the ZHA remote device.
+            selector:
+                entity_filter:
+                platform: zha
+        actions:
+            name: Actions for Button Presses
+            description: Define actions for each button press type. This 
+                     needs to be a dictionary with subtypes (turn_on, turn_off, 
+                     etc.) as keys and the corresponding service calls (or 
+                     functions) as values.
+            default: {}
         remote_device:
             name: Remote dimmer switch
             selector:
