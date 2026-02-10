@@ -10,7 +10,7 @@ blueprint:
         device:
           integration: zha
           filter:
-            - manufacturer: "ROBB Smarrt"
+            - manufacturer: "ROBB smarrt"
     light_1:
       name: "Light - Channel 1"
       description: "Light controlled by endpoint 1."
