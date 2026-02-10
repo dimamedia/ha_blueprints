@@ -4,28 +4,31 @@ blueprint:
   domain: automation
   input:
     remote:
-      name: "Remote control"
+      name: "Remote Control"
       description: "Select the ROBB Smarrt remote device."
       selector:
         device:
           integration: zha
           filter:
-            - manufacturer: "ROBB smarrt"
+            - manufacturer: "ROBB Smarrt"
     light_1:
-      name: "Light channel 1"
+      name: "Light - Channel 1"
       description: "Light controlled by endpoint 1."
+      default: []
       selector:
         entity:
           domain: light
     light_2:
-      name: "Light channel 2"
+      name: "Light - Channel 2"
       description: "Light controlled by endpoint 2."
+      default: []
       selector:
         entity:
           domain: light
     light_3:
-      name: "Light channel 3"
+      name: "Light - Channel 3"
       description: "Light controlled by endpoint 3."
+      default: []
       selector:
         entity:
           domain: light
@@ -38,15 +41,58 @@ trigger:
     event_type: zha_event
     event_data:
       device_id: !input remote
+      command: "on"
+    id: "toggle"
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input remote
+      command: "off"
+    id: "toggle"
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input remote
+      command: "move_to_color"
+    id: "rgb"
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input remote
+      command: "move_to_color_temp"
+    id: "cct"
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input remote
+      command: "step_with_on_off"
+    id: "step"
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input remote
+      command: "move_with_on_off"
+    id: "hold"
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input remote
+      command: "recall"
+    id: "recall"
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input remote
+      command: "store"
+    id: "store"
 
 action:
   - variables:
-      command: "{{ trigger.event.data.command }}"
       endpoint: "{{ trigger.event.data.endpoint_id }}"
       params: "{{ trigger.event.data.params }}"
       args: "{{ trigger.event.data.args }}"
       
-      # Map the target light based on the endpoint ID (1-3)
+      # Select the target light based on the endpoint
       target_light: >
         {% if endpoint == 1 %} !input light_1
         {% elif endpoint == 2 %} !input light_2
@@ -59,26 +105,33 @@ action:
       scene_entity: "scene.{{ entity_name }}_{{ scene_id_val }}"
       scene_slug: "{{ entity_name }}_{{ scene_id_val }}"
 
+  # Verify light is assigned to the channel
   - condition: template
     value_template: "{{ target_light is not none and target_light != 'none' }}"
 
   - choose:
       # --- TOGGLE ---
-      - conditions: "{{ command in ['on', 'off'] }}"
+      - conditions:
+          - condition: trigger
+            id: "toggle"
         sequence:
           - action: light.toggle
             target:
               entity_id: "{{ target_light }}"
 
-      # --- SCENE RECALL (Short Press) ---
-      - conditions: "{{ command == 'recall' }}"
+      # --- SCENE RECALL ---
+      - conditions:
+          - condition: trigger
+            id: "recall"
         sequence:
           - action: scene.turn_on
             target:
               entity_id: "{{ scene_entity }}"
 
-      # --- SCENE STORE (Long Press) ---
-      - conditions: "{{ command == 'store' }}"
+      # --- SCENE STORE ---
+      - conditions:
+          - condition: trigger
+            id: "store"
         sequence:
           - action: scene.create
             data:
@@ -87,9 +140,11 @@ action:
                 - "{{ target_light }}"
 
       # --- RGB (Only if ON) ---
-      - conditions: 
-          - "{{ command == 'move_to_color' }}"
-          - "{{ is_state(target_light, 'on') }}"
+      - conditions:
+          - condition: trigger
+            id: "rgb"
+          - condition: template
+            value_template: "{{ is_state(target_light, 'on') }}"
         sequence:
           - action: light.turn_on
             target:
@@ -102,8 +157,10 @@ action:
 
       # --- CCT (Only if ON) ---
       - conditions:
-          - "{{ command == 'move_to_color_temp' }}"
-          - "{{ is_state(target_light, 'on') }}"
+          - condition: trigger
+            id: "cct"
+          - condition: template
+            value_template: "{{ is_state(target_light, 'on') }}"
         sequence:
           - action: light.turn_on
             target:
@@ -113,7 +170,9 @@ action:
               transition: 0.5
 
       # --- BRIGHTNESS STEP ---
-      - conditions: "{{ command == 'step_with_on_off' }}"
+      - conditions:
+          - condition: trigger
+            id: "step"
         sequence:
           - action: light.turn_on
             target:
@@ -123,7 +182,9 @@ action:
               transition: 0.3
 
       # --- DIMMING HOLD ---
-      - conditions: "{{ command == 'move_with_on_off' }}"
+      - conditions:
+          - condition: trigger
+            id: "hold"
         sequence:
           - repeat:
               while:
@@ -156,4 +217,4 @@ action:
                     - condition: template
                       value_template: "{{ wait.trigger is not none }}"
                   then:
-                    - stop: "Released"
+                    - stop: "Button released"
