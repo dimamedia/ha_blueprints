@@ -1,37 +1,36 @@
 blueprint:
   name: "ROBB Smarrt - (RGB, CCT, Dimmer, Scene) 3-Channel Control"
-  description: "Control up to 3 lights. Includes Toggle, RGB, CCT, Dimming, and Scene Store/Recall."
+  description: "Control up to 3 light groups. Includes Toggle, RGB, CCT, Dimming, and Scene Store/Recall."
   domain: automation
   input:
     remote:
       name: "Remote Control"
-      description: "Select the ROBB Smarrt remote device."
       selector:
         device:
           integration: zha
           filter:
             - manufacturer: "ROBB Smarrt"
     light_1:
-      name: "Light - Channel 1"
-      description: "Light controlled by endpoint 1."
-      default: []
+      name: "Lights - Channel 1"
+      default: 
       selector:
-        entity:
-          domain: light
+        target:
+          entity:
+            domain: light
     light_2:
-      name: "Light - Channel 2"
-      description: "Light controlled by endpoint 2."
-      default: []
+      name: "Lights - Channel 2"
+      default: 
       selector:
-        entity:
-          domain: light
+        target:
+          entity:
+            domain: light
     light_3:
-      name: "Light - Channel 3"
-      description: "Light controlled by endpoint 3."
-      default: []
+      name: "Lights - Channel 3"
+      default: 
       selector:
-        entity:
-          domain: light
+        target:
+          entity:
+            domain: light
 
 mode: parallel
 max: 10
@@ -89,25 +88,28 @@ trigger:
 action:
   - variables:
       endpoint: "{{ trigger.event.data.endpoint_id }}"
-      params: "{{ trigger.event.data.params }}"
-      args: "{{ trigger.event.data.args }}"
+      # Map targets
+      target_map:
+        1: !input light_1
+        2: !input light_2
+        3: !input light_3
       
-      # Select the target light based on the endpoint
-      target_light: >
-        {% if endpoint == 1 %} !input light_1
-        {% elif endpoint == 2 %} !input light_2
-        {% elif endpoint == 3 %} !input light_3
-        {% else %} none
+      target_data: "{{ target_map.get(endpoint) }}"
+      # Extract entity_id for logic (takes the first entity from the list for calculations)
+      first_entity: >
+        {% if target_data.entity_id is defined %}
+          {% if target_data.entity_id is string %}
+            {{ target_data.entity_id }}
+          {% else %}
+            {{ target_data.entity_id[0] }}
+          {% endif %}
+        {% else %}
+          none
         {% endif %}
-      
-      entity_name: "{{ target_light.split('.')[1] if target_light is not none and target_light != 'none' }}"
-      scene_id_val: "{{ params.scene_id if params.scene_id is defined else 0 }}"
-      scene_entity: "scene.{{ entity_name }}_{{ scene_id_val }}"
-      scene_slug: "{{ entity_name }}_{{ scene_id_val }}"
 
-  # Verify light is assigned to the channel
+  # Stop if no lights are assigned
   - condition: template
-    value_template: "{{ target_light is not none and target_light != 'none' }}"
+    value_template: "{{ first_entity != 'none' }}"
 
   - choose:
       # --- TOGGLE ---
@@ -116,8 +118,7 @@ action:
             id: "toggle"
         sequence:
           - action: light.toggle
-            target:
-              entity_id: "{{ target_light }}"
+            target: "{{ target_data }}"
 
       # --- SCENE RECALL ---
       - conditions:
@@ -126,7 +127,7 @@ action:
         sequence:
           - action: scene.turn_on
             target:
-              entity_id: "{{ scene_entity }}"
+              entity_id: "scene.{{ first_entity.split('.')[1] }}_{{ trigger.event.data.params.scene_id }}"
 
       # --- SCENE STORE ---
       - conditions:
@@ -135,24 +136,22 @@ action:
         sequence:
           - action: scene.create
             data:
-              scene_id: "{{ scene_slug }}"
-              snapshot_entities:
-                - "{{ target_light }}"
+              scene_id: "{{ first_entity.split('.')[1] }}_{{ trigger.event.data.params.scene_id }}"
+              snapshot_entities: "{{ first_entity }}"
 
       # --- RGB (Only if ON) ---
       - conditions:
           - condition: trigger
             id: "rgb"
           - condition: template
-            value_template: "{{ is_state(target_light, 'on') }}"
+            value_template: "{{ is_state(first_entity, 'on') }}"
         sequence:
           - action: light.turn_on
-            target:
-              entity_id: "{{ target_light }}"
+            target: "{{ target_data }}"
             data:
               xy_color:
-                - "{{ params.color_x / 65535 }}"
-                - "{{ params.color_y / 65535 }}"
+                - "{{ trigger.event.data.params.color_x / 65535 }}"
+                - "{{ trigger.event.data.params.color_y / 65535 }}"
               transition: 0.5
 
       # --- CCT (Only if ON) ---
@@ -160,28 +159,26 @@ action:
           - condition: trigger
             id: "cct"
           - condition: template
-            value_template: "{{ is_state(target_light, 'on') }}"
+            value_template: "{{ is_state(first_entity, 'on') }}"
         sequence:
           - action: light.turn_on
-            target:
-              entity_id: "{{ target_light }}"
+            target: "{{ target_data }}"
             data:
-              color_temp: "{{ args[0] }}"
+              color_temp: "{{ trigger.event.data.args[0] }}"
               transition: 0.5
 
-      # --- BRIGHTNESS STEP ---
+      # --- STEP ---
       - conditions:
           - condition: trigger
             id: "step"
         sequence:
           - action: light.turn_on
-            target:
-              entity_id: "{{ target_light }}"
+            target: "{{ target_data }}"
             data:
-              brightness_step_pct: "{{ 13 if params.step_mode == 0 else -13 }}"
+              brightness_step_pct: "{{ 13 if trigger.event.data.params.step_mode == 0 else -13 }}"
               transition: 0.3
 
-      # --- DIMMING HOLD ---
+      # --- HOLD ---
       - conditions:
           - condition: trigger
             id: "hold"
@@ -190,8 +187,8 @@ action:
               while:
                 - condition: template
                   value_template: >
-                    {% set current = state_attr(target_light, 'brightness') | float(0) %}
-                    {% set mode = params.move_mode %}
+                    {% set current = state_attr(first_entity, 'brightness') | float(0) %}
+                    {% set mode = trigger.event.data.params.move_mode %}
                     {% if mode == 0 %}
                       {{ current < 255 and repeat.index < 20 }}
                     {% else %}
@@ -199,10 +196,9 @@ action:
                     {% endif %}
               sequence:
                 - action: light.turn_on
-                  target:
-                    entity_id: "{{ target_light }}"
+                  target: "{{ target_data }}"
                   data:
-                    brightness_step_pct: "{{ 10 if params.move_mode == 0 else -10 }}"
+                    brightness_step_pct: "{{ 10 if trigger.event.data.params.move_mode == 0 else -10 }}"
                     transition: 0.5
                 - wait_for_trigger:
                     - platform: event
