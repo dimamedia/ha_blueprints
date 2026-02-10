@@ -1,6 +1,31 @@
 blueprint:
   name: "ROBB Smarrt - (RGB, CCT, Dimmer, Scene) 3-Channel Control"
-  description: "Control up to 3 light groups. Includes Toggle, RGB, CCT, Dimming, and Scene Store/Recall."
+  description: >
+  # Robb smarrt remote controller
+  Control up to 3 light groups. Includes Toggle, RGB, CCT, Dimming, and Scene Store/Recall.
+
+    - **3 channel**
+      - Assign multiple lights to each channel and toggle channels with 1-3 buttons. So it’s possible to control even all selected channels at the same time.
+
+    - **Power button**
+      - Toggles lights on or off.
+
+    - **CCT slide**
+      - Controls color temperature from cold to warm.
+
+    - **RGB wheel**
+      - Controls light hue 0-360°.
+    
+    - **Dimmer buttons**
+      - Dim or brighten lights in 10% steps with short press.
+      - Continuously dim or brighten lights with long press.
+
+    - **Scene buttons**
+      - Store current light settings as a scene with long press.
+      - Recal stored scene with short press.
+      - 1-5 scenes for each group.
+      - Button 6 is not working as it doesn’t send any event to zha.
+
   domain: automation
   input:
     remote:
