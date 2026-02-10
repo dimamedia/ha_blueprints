@@ -9,23 +9,23 @@ blueprint:
         device:
           integration: zha
           filter:
-            - manufacturer: "ROBB Smarrt"
+            - manufacturer: "ROBB smarrt"
     light_1:
-      name: "Lights - Channel 1"
+      name: "Light group 1"
       default: 
       selector:
         target:
           entity:
             domain: light
     light_2:
-      name: "Lights - Channel 2"
+      name: "Light group 2"
       default: 
       selector:
         target:
           entity:
             domain: light
     light_3:
-      name: "Lights - Channel 3"
+      name: "Light group 3"
       default: 
       selector:
         target:
