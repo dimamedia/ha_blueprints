@@ -4,7 +4,7 @@ blueprint:
   domain: automation
   input:
     remote:
-      name: "Remote Control"
+      name: "Remote control"
       description: "Select the ROBB Smarrt remote device."
       selector:
         device:
@@ -12,23 +12,20 @@ blueprint:
           filter:
             - manufacturer: "ROBB smarrt"
     light_1:
-      name: "Light - Channel 1"
+      name: "Light channel 1"
       description: "Light controlled by endpoint 1."
-      default: []
       selector:
         entity:
           domain: light
     light_2:
-      name: "Light - Channel 2"
+      name: "Light channel 2"
       description: "Light controlled by endpoint 2."
-      default: []
       selector:
         entity:
           domain: light
     light_3:
-      name: "Light - Channel 3"
+      name: "Light channel 3"
       description: "Light controlled by endpoint 3."
-      default: []
       selector:
         entity:
           domain: light
