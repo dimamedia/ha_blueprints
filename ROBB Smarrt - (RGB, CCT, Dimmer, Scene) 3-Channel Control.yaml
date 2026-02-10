@@ -1,8 +1,8 @@
 blueprint:
   name: "ROBB Smarrt - (RGB, CCT, Dimmer, Scene) 3-Channel Control"
   description: >
-  # Robb smarrt remote controller
-  Control up to 3 light groups. Includes Toggle, RGB, CCT, Dimming, and Scene Store/Recall.
+    # Robb smarrt remote controller
+    Control up to 3 light groups. Includes Toggle, RGB, CCT, Dimming, and Scene Store/Recall.
 
     - **3 channel**
       - Assign multiple lights to each channel and toggle channels with 1-3 buttons. So it’s possible to control even all selected channels at the same time.
